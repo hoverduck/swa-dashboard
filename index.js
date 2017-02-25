@@ -112,7 +112,7 @@ process.argv.forEach((arg, i, argv) => {
 if (isOneWay) {
   returnDateString = ""
   returnTimeOfDay = ""
-  totalDealPrice = undefined;
+  totalDealPrice = undefined
 }
 
 /**
@@ -525,7 +525,12 @@ const fetch = () => {
         )
 
         if (awesomeDealIsAwesome) {
-          const message = `Deal alert! Combined total has hit ${formatPrice(lowestOutboundFare + lowestReturnFare)}. Individual fares are ${formatPrice(lowestOutboundFare)} (outbound) and ${formatPrice(lowestReturnFare)} (return).`
+          let message
+          if (isOneWay) {
+            message = `Deal alert! Fare total for ${originAirport}->${destinationAirport} has hit ${formatPrice(lowestOutboundFare)}.`
+          } else {
+            message = `Deal alert! Combined total for ${originAirport}->${destinationAirport} has hit ${formatPrice(lowestOutboundFare + lowestReturnFare)}. Individual fares are ${formatPrice(lowestOutboundFare)} (outbound) and ${formatPrice(lowestReturnFare)} (return).`
+          }
 
           // Party time
           dashboard.log([
@@ -538,12 +543,12 @@ const fetch = () => {
         }
 
         dashboard.log([
-          `Lowest fares for an outbound flight is currently ${formatPrice([lowestOutboundFare, outboundFareDiffString].filter(i => i).join(" "))}`,
+          `Lowest fare for an outbound flight is currently ${formatPrice([lowestOutboundFare, outboundFareDiffString].filter(i => i).join(" "))}`,
         ])
 
         if (!isOneWay) {
           dashboard.log([
-            `Lowest fares for a return flight is currently ${formatPrice([lowestReturnFare, returnFareDiffString].filter(i => i).join(" "))}`,
+            `Lowest fare for a return flight is currently ${formatPrice([lowestReturnFare, returnFareDiffString].filter(i => i).join(" "))}`,
             `Total for both flights is currently ${formatPrice(lowestOutboundFare + lowestReturnFare)}`
           ])
         }
@@ -568,7 +573,11 @@ const fetch = () => {
         // Schedule a daily update if one hasn't already been scheduled
         if (dailyUpdateSet == null) {
           dailyUpdateSet = setTimeout(() => {
-            sendTextMessage(`Daily update: combined total is currently ${formatPrice(prevLowestOutboundFare + prevLowestReturnFare)}, individual fares are ${formatPrice(prevLowestOutboundFare)} (outbound) and ${formatPrice(prevLowestReturnFare)} (return).`)
+            if (isOneWay) {
+              sendTextMessage(`Daily update: fare for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare)}.`)
+            } else {
+              sendTextMessage(`Daily update: combined total for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare + prevLowestReturnFare)}, individual fares are ${formatPrice(prevLowestOutboundFare)} (outbound) and ${formatPrice(prevLowestReturnFare)} (return).`)
+            }
             dailyUpdateSet = null
           }, msTilDailyUpdate)
         }
@@ -590,8 +599,8 @@ dashboard.settings([
   `Fare type: ${fareType.toLowerCase()}`,
   `Passengers: ${adultPassengerCount}`,
   `Interval: ${pretty(interval * TIME_MIN)}`,
-  !isOneWay && `Individual deal price: ${individualDealPrice ? `<= ${formatPrice(individualDealPrice)}` : "disabled"}`,
-  `Total deal price: ${totalDealPrice ? `<= ${formatPrice(totalDealPrice)}` : "disabled"}`,
+  `Individual deal price: ${individualDealPrice ? `<= ${formatPrice(individualDealPrice)}` : "disabled"}`,
+  !isOneWay && `Total deal price: ${totalDealPrice ? `<= ${formatPrice(totalDealPrice)}` : "disabled"}`,
   `SMS alerts: ${isTwilioConfigured ? process.env.TWILIO_PHONE_TO : "disabled"}`,
   `Daily update: ${dailyUpdate ? dailyUpdateAt : "disabled"}`
 ].filter(s => s))
