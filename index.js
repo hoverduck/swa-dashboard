@@ -57,6 +57,7 @@ var isInternational = false
 var dailyUpdate = false
 var dailyUpdateAt = "18:00"
 var dailyUpdateSet
+var nonstopClass = ''
 
 // Parse command line options (no validation, sorry!)
 process.argv.forEach((arg, i, argv) => {
@@ -102,6 +103,9 @@ process.argv.forEach((arg, i, argv) => {
       break
     case "--daily-update":
       dailyUpdate = isTwilioConfigured
+      break
+    case "--nonstop":
+      nonstopClass = '.nonstop'
       break
   }
 })
@@ -461,12 +465,12 @@ const fetch = () => {
       returnDateString,
       adultPassengerCount
     })
-    .find("#faresOutbound .product_price, #b0Table span.var.h5")
+    .find(`#faresOutbound ${nonstopClass} .product_price, #b0Table span.var.h5`)
     .then((priceMarkup) => {
       const price = parsePriceMarkup(priceMarkup)
       fares.outbound.push(price)
     })
-    .find("#faresReturn .product_price, #b1Table span.var.h5")
+    .find(`#faresReturn ${nonstopClass} .product_price, #b1Table span.var.h5`)
     .then((priceMarkup) => {
       if (isOneWay) return // Only record return prices if it's a two-way flight
       const price = parsePriceMarkup(priceMarkup)
@@ -602,7 +606,8 @@ dashboard.settings([
   `Individual deal price: ${individualDealPrice ? `<= ${formatPrice(individualDealPrice)}` : "disabled"}`,
   !isOneWay && `Total deal price: ${totalDealPrice ? `<= ${formatPrice(totalDealPrice)}` : "disabled"}`,
   `SMS alerts: ${isTwilioConfigured ? process.env.TWILIO_PHONE_TO : "disabled"}`,
-  `Daily update: ${dailyUpdate ? dailyUpdateAt : "disabled"}`
+  `Daily update: ${dailyUpdate ? dailyUpdateAt : "disabled"}`,
+  `Nonstop: ${nonstopClass ? "enabled" : "disabled"}`,
 ].filter(s => s))
 
 fetch()
