@@ -635,6 +635,7 @@ dashboard.settings([
   `Individual deal price: ${individualDealPrice ? `<= ${formatPrice(individualDealPrice)}` : "disabled"}`,
   !isOneWay && `Total deal price: ${totalDealPrice ? `<= ${formatPrice(totalDealPrice)}` : "disabled"}`,
   `SMS alerts: ${isTwilioConfigured ? process.env.TWILIO_PHONE_TO : "disabled"}`,
+  `Telegram alerts: ${isTelegramConfigured ? "enabled" : "disabled"}`,
   `Daily update: ${dailyUpdate ? dailyUpdateAt : "disabled"}`,
   `Nonstop: ${nonstopClass ? "enabled" : "disabled"}`,
 ].filter(s => s))
