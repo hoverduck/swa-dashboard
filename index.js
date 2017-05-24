@@ -24,6 +24,10 @@ const isTwilioConfigured = process.env.TWILIO_ACCOUNT_SID &&
                            process.env.TWILIO_PHONE_FROM &&
                            process.env.TWILIO_PHONE_TO
 
+// Check if Telegram env vars are set
+const isTelegramConfigured = process.env.TELEGRAM_BOT_TOKEN &&
+                           process.env.TELEGRAM_CHAT_ID
+
 // Fares
 var prevLowestOutboundFare
 var prevLowestReturnFare
@@ -102,7 +106,7 @@ process.argv.forEach((arg, i, argv) => {
       dailyUpdateAt = argv[i + 1]
       break
     case "--daily-update":
-      dailyUpdate = isTwilioConfigured
+      dailyUpdate = isTwilioConfigured || isTelegramConfigured
       break
     case "--nonstop":
       nonstopClass = '.nonstop'
@@ -411,6 +415,27 @@ const sendTextMessage = (message) => {
   } catch(e) {}
 }
 
+
+/**
+ * Send a message using Telegram
+ *
+ * @param {Str} message
+ *
+ * @return {Void}
+ */
+const sendTelegramMessage = (message) => {
+  const TelegramBot = require('node-telegram-bot-api');
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const bot = new TelegramBot( token, { polling: false } );
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  bot.sendMessage(chatId, message).catch((error) => {
+    dashboard.log([
+      chalk.red( `Error: failed to send Telegram message to ${chatId} (${error.code}) - ${error.response.body.description}` )
+    ]);
+  });
+}
+
 /**
  * Format fare type price
  *
@@ -543,6 +568,10 @@ const fetch = () => {
 
           if (isTwilioConfigured) {
             sendTextMessage(message)
+          }
+
+          if (isTelegramConfigured) {
+            sendTelegramMessage(message)
           }
         }
 
