@@ -385,6 +385,24 @@ isInternational = waypoints.some(w => w.iso !== "US")
 const dashboard = new Dashboard()
 waypoints.map(w => dashboard.waypoint(w))
 
+
+/**
+ * Send a message using any configured service
+ *
+ * @param {Str} message
+ *
+ * @return {Void}
+ */
+const sendMessage = (message) => {
+  if ( isTwilioConfigured ) {
+    sendTextMessage(message);
+  }
+
+  if ( isTelegramConfigured ) {
+    sendTelegramMessage(message);
+  }
+}
+
 /**
  * Send a text message using Twilio
  *
@@ -566,13 +584,8 @@ const fetch = () => {
             rainbow(message)
           ])
 
-          if (isTwilioConfigured) {
-            sendTextMessage(message)
-          }
-
-          if (isTelegramConfigured) {
-            sendTelegramMessage(message)
-          }
+          // Send a message to any configured service
+          sendMessage(message)
         }
 
         dashboard.log([
@@ -607,9 +620,9 @@ const fetch = () => {
         if (dailyUpdateSet == null) {
           dailyUpdateSet = setTimeout(() => {
             if (isOneWay) {
-              sendTextMessage(`Daily update: fare for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare)}.`)
+              sendMessage(`Daily update: fare for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare)}.`)
             } else {
-              sendTextMessage(`Daily update: combined total for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare + prevLowestReturnFare)}, individual fares are ${formatPrice(prevLowestOutboundFare)} (outbound) and ${formatPrice(prevLowestReturnFare)} (return).`)
+              sendMessage(`Daily update: combined total for ${originAirport}->${destinationAirport} is currently ${formatPrice(prevLowestOutboundFare + prevLowestReturnFare)}, individual fares are ${formatPrice(prevLowestOutboundFare)} (outbound) and ${formatPrice(prevLowestReturnFare)} (return).`)
             }
             dailyUpdateSet = null
           }, msTilDailyUpdate)
