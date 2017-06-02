@@ -574,9 +574,9 @@ const fetch = () => {
         if (awesomeDealIsAwesome) {
           let message
           if (isOneWay) {
-            message = `Deal alert! Fare total for ${originAirport}->${destinationAirport} has hit ${formatPrice(lowestOutboundFare)}.`
+            message = `Deal alert! Fare total for ${originAirport}->${destinationAirport} on ${outboundDateString}–${returnDateString} has hit ${formatPrice(lowestOutboundFare)}.`
           } else {
-            message = `Deal alert! Combined total for ${originAirport}->${destinationAirport} has hit ${formatPrice(lowestOutboundFare + lowestReturnFare)}. Individual fares are ${formatPrice(lowestOutboundFare)} (outbound) and ${formatPrice(lowestReturnFare)} (return).`
+            message = `Deal alert! Combined total for ${originAirport}->${destinationAirport} on ${outboundDateString}–${returnDateString} has hit ${formatPrice(lowestOutboundFare + lowestReturnFare)}. Individual fares are ${formatPrice(lowestOutboundFare)} (outbound) and ${formatPrice(lowestReturnFare)} (return).`
           }
 
           // Party time
