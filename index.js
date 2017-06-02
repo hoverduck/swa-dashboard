@@ -534,32 +534,36 @@ const fetch = () => {
       var outboundFareDiffString = ""
       var returnFareDiffString = ""
 
-      // Create a string to show the difference
-      if (!isNaN(outboundFareDiff) && !isNaN(returnFareDiff)) {
+      // Usually this is because of a scraping error or there are no matching flights
+      if (!isFinite(lowestOutboundFare) || !isFinite(lowestReturnFare)) {
+        faresAreValid = false
 
-        // Usually this is because of a scraping error
-        if (!isFinite(outboundFareDiff) || !isFinite(returnFareDiff)) {
-          faresAreValid = false
-        }
-
-        if (outboundFareDiff > 0) {
-          outboundFareDiffString = chalk.green(`(down ${formatPrice(Math.abs(outboundFareDiff))})`)
-        } else if (outboundFareDiff < 0) {
-          outboundFareDiffString = chalk.red(`(up ${formatPrice(Math.abs(outboundFareDiff))})`)
-        } else if (outboundFareDiff === 0) {
-          outboundFareDiffString = chalk.blue(`(no change)`)
-        }
-
-        if (returnFareDiff > 0) {
-          returnFareDiffString = chalk.green(`(down ${formatPrice(Math.abs(returnFareDiff))})`)
-        } else if (returnFareDiff < 0) {
-          returnFareDiffString = chalk.red(`(up ${formatPrice(Math.abs(returnFareDiff))})`)
-        } else if (returnFareDiff === 0) {
-          returnFareDiffString = chalk.blue(`(no change)`)
-        }
+        dashboard.log([
+          chalk.yellow(`No matching flights could be found (trying again in ${pretty(interval * TIME_MIN)})`)
+        ])
       }
 
       if (faresAreValid) {
+        // Create a string to show the difference
+        if (!isNaN(outboundFareDiff) && !isNaN(returnFareDiff)) {
+
+          if (outboundFareDiff > 0) {
+            outboundFareDiffString = chalk.green(`(down ${formatPrice(Math.abs(outboundFareDiff))})`)
+          } else if (outboundFareDiff < 0) {
+            outboundFareDiffString = chalk.red(`(up ${formatPrice(Math.abs(outboundFareDiff))})`)
+          } else if (outboundFareDiff === 0) {
+            outboundFareDiffString = chalk.blue(`(no change)`)
+          }
+
+          if (returnFareDiff > 0) {
+            returnFareDiffString = chalk.green(`(down ${formatPrice(Math.abs(returnFareDiff))})`)
+          } else if (returnFareDiff < 0) {
+            returnFareDiffString = chalk.red(`(up ${formatPrice(Math.abs(returnFareDiff))})`)
+          } else if (returnFareDiff === 0) {
+            returnFareDiffString = chalk.blue(`(no change)`)
+          }
+        }
+
         // Store current fares for next time
         prevLowestOutboundFare = lowestOutboundFare
         prevLowestReturnFare = lowestReturnFare
