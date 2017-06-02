@@ -394,11 +394,11 @@ waypoints.map(w => dashboard.waypoint(w))
  * @return {Void}
  */
 const sendMessage = (message) => {
-  if ( isTwilioConfigured ) {
+  if (isTwilioConfigured) {
     sendTextMessage(message)
   }
 
-  if ( isTelegramConfigured ) {
+  if (isTelegramConfigured) {
     sendTelegramMessage(message)
   }
 }
@@ -444,12 +444,12 @@ const sendTextMessage = (message) => {
 const sendTelegramMessage = (message) => {
   const TelegramBot = require('node-telegram-bot-api')
   const token = process.env.TELEGRAM_BOT_TOKEN
-  const bot = new TelegramBot( token, { polling: false } )
+  const bot = new TelegramBot(token, { polling: false })
   const chatId = process.env.TELEGRAM_CHAT_ID
 
   bot.sendMessage(chatId, message).catch((error) => {
     dashboard.log([
-      chalk.red( `Error: failed to send Telegram message to ${chatId} (${error.code}) - ${error.response.body.description}` )
+      chalk.red(`Error: failed to send Telegram message to ${chatId} (${error.code}) - ${error.response.body.description}`)
     ])
   })
 }
