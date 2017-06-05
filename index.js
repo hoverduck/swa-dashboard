@@ -535,7 +535,7 @@ const fetch = () => {
       var returnFareDiffString = ""
 
       // Usually this is because of a scraping error or there are no matching flights
-      if (!isFinite(lowestOutboundFare) || !isFinite(lowestReturnFare)) {
+      if (!isFinite(lowestOutboundFare) && !isFinite(lowestReturnFare)) {
         faresAreValid = false
 
         dashboard.log([
