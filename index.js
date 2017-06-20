@@ -62,6 +62,8 @@ var dailyUpdate = false
 var dailyUpdateAt = "18:00"
 var dailyUpdateSet
 var nonstopClass = ''
+var watchFlightOut = null;
+var watchFlightReturn = null;
 
 // Parse command line options (no validation, sorry!)
 process.argv.forEach((arg, i, argv) => {
@@ -110,6 +112,12 @@ process.argv.forEach((arg, i, argv) => {
       break
     case "--nonstop":
       nonstopClass = '.nonstop'
+      break
+    case "--watch-flight-out":
+      watchFlightOut = argv[i + 1]
+      break
+    case "--watch-flight-return":
+      watchFlightReturn = argv[i + 1]
       break
   }
 })
@@ -194,7 +202,7 @@ class Dashboard {
         type: contrib.map,
         size: {
           width: 9,
-          height: 5,
+          height: 6,
           top: 0,
           left: 0
         },
@@ -212,7 +220,7 @@ class Dashboard {
         type: contrib.log,
         size: {
           width: 3,
-          height: 5,
+          height: 6,
           top: 0,
           left: 9
         },
@@ -476,14 +484,12 @@ const formatPrice = (price) => {
  *
  * @return {Int}
  */
-const parsePriceMarkup = (priceMarkup) => {
-  if (fareType === 'POINTS') {
-    const matches = priceMarkup.text().split(',').join('')
-    return parseInt(matches)
-  } else {
-    const matches = priceMarkup.toString().match(/\$.*?(\d+)/)
-    return parseInt(matches[1])
-  }
+const parsePriceMarkup = (dataString) => {
+  var values = dataString.split(/@/);
+  var prices = values.filter((val) => { return val.match(/POINTS/); }) // Even searching for 'dollars' still says POINTS here
+    .map((price) => { return parseInt(price); });
+
+  return Math.min(...prices);
 }
 
 /**
@@ -508,16 +514,29 @@ const fetch = () => {
       returnDateString,
       adultPassengerCount
     })
-    .find(`#faresOutbound ${nonstopClass} .product_price, #b0Table span.var.h5`)
-    .then((priceMarkup) => {
-      const price = parsePriceMarkup(priceMarkup)
-      fares.outbound.push(price)
-    })
-    .find(`#faresReturn ${nonstopClass} .product_price, #b1Table span.var.h5`)
-    .then((priceMarkup) => {
-      if (isOneWay) return // Only record return prices if it's a two-way flight
-      const price = parsePriceMarkup(priceMarkup)
-      fares.return.push(price)
+    .find('#faresOutbound .depart_column .cellWrapper input:not([id])')
+    .set("outboundName", "@name")
+    .set("outboundValue", "@value")
+    .find('#faresReturn .depart_column .cellWrapper input:not([id])')
+    .set("returnName", "@name")
+    .set("returnValue", "@value")
+    .data((data) => {
+      var outboundFlightNum = data.outboundName.split(originAirport)[0];
+      var outboundPrice = parsePriceMarkup(data.outboundValue);
+
+      // Don't record any flights that are sold out or don't match our requested flight
+      if (outboundPrice !== Infinity && (watchFlightOut === null || watchFlightOut === outboundFlightNum)) {
+        fares.outbound.push(outboundPrice);
+      }
+
+      var returnFlightNum = data.returnName.split(destinationAirport)[0];
+      var returnPrice = parsePriceMarkup(data.returnValue);
+
+      // Don't record any flights that are sold out or don't match our requested flight
+      if (returnPrice !== Infinity && (watchFlightReturn === null || watchFlightReturn === returnFlightNum)) {
+        fares.return.push(returnPrice);
+      }
+
     })
     .done(() => {
       const lowestOutboundFare = Math.min(...fares.outbound)
@@ -565,15 +584,19 @@ const fetch = () => {
         }
 
         // Store current fares for next time
-        prevLowestOutboundFare = lowestOutboundFare
-        prevLowestReturnFare = lowestReturnFare
+        prevLowestOutboundFare = lowestOutboundFare;
+        prevLowestReturnFare = lowestReturnFare;
 
         // Do some Twilio magic (SMS alerts for awesome deals)
         const awesomeDealIsAwesome = (
           totalDealPrice && (lowestOutboundFare + lowestReturnFare <= totalDealPrice)
         ) || (
           individualDealPrice && (lowestOutboundFare <= individualDealPrice || lowestReturnFare <= individualDealPrice)
-        )
+        ) || (
+          watchFlightOut && (lowestOutboundFare < prevLowestOutboundFare) 
+        ) || (
+          watchFlightReturn && (lowestReturnFare < prevLowestReturnFare) 
+        );
 
         if (awesomeDealIsAwesome) {
           let message
@@ -581,6 +604,26 @@ const fetch = () => {
             message = `Deal alert! Fare total for ${originAirport}->${destinationAirport} on ${outboundDateString}–${returnDateString} has hit ${formatPrice(lowestOutboundFare)}.`
           } else {
             message = `Deal alert! Combined total for ${originAirport}->${destinationAirport} on ${outboundDateString}–${returnDateString} has hit ${formatPrice(lowestOutboundFare + lowestReturnFare)}. Individual fares are ${formatPrice(lowestOutboundFare)} (outbound) and ${formatPrice(lowestReturnFare)} (return).`
+          }
+
+          if (watchFlightOut || watchFlightReturn) {
+            message = `Deal alert! Price drop for the flights you're watching! `;
+            if (watchFlightOut && (lowestOutboundFare < prevLowestOutboundFare)) {
+              message += `${originAirport}->${destinationAirport} now ${formatPrice(lowestOutboundFare)} (prev ${formatPrice(lowestOutboundFare)}).  `
+            }
+            if (watchFlightReturn && (lowestReturnFare < prevLowestReturnFare)) {
+              message += `${destinationAirport}->${originAirport} now ${formatPrice(lowestReturnFare)} (prev ${formatPrice(lowestReturnFare)}).`
+            }
+          }
+
+          if ( watchFlightOut || watchFlightReturn ) {
+            message = `Deal alert! Price drop for the flights you're watching! `;
+            if ( watchFlightOut && ( lowestOutboundFare < prevLowestOutboundFare ) ) {
+              message += `${originAirport}->${destinationAirport} now ${formatPrice(lowestOutboundFare)} (prev ${formatPrice(lowestOutboundFare)}).  `
+            }
+            if ( watchFlightReturn && ( lowestReturnFare < prevLowestReturnFare ) ) {
+              message += `${destinationAirport}->${originAirport} now ${formatPrice(lowestReturnFare)} (prev ${formatPrice(lowestReturnFare)}).`
+            }
           }
 
           // Party time
@@ -655,6 +698,8 @@ dashboard.settings([
   `Telegram alerts: ${isTelegramConfigured ? "enabled" : "disabled"}`,
   `Daily update: ${dailyUpdate ? dailyUpdateAt : "disabled"}`,
   `Nonstop: ${nonstopClass ? "enabled" : "disabled"}`,
+  `Watch Outbound Flight #: ${watchFlightOut ? watchFlightOut : "disabled"}`,
+  `Watch Return Flight #: ${watchFlightReturn ? watchFlightReturn : "disabled"}`,
 ].filter(s => s))
 
 fetch()

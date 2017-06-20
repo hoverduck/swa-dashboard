@@ -59,6 +59,22 @@ swa \
   --interval 5 # In minutes (optional)
 ```
 
+If you would like to track **specific** flights to be alerted to price drops, you can use the `--watch-flight-[out|return]` flags.  You can use one or both of the flags to watch each direction together or individually.  If a flight has multiple stops, specify all flight numbers separated with a `/`.
+
+```bash
+swa \
+  --from 'DAL' \
+  --to 'LGA' \
+  --leave-date '11/01/2017' \
+  --return-date '11/08/2017' \
+  --leave-time 'anytime' \ # Can be anytime, morning, afternoon, evening (optional)
+  --return-time 'anytime' \ # Can be anytime, morning, afternoon, evening (optional)
+  --fare-type 'dollars' \ # Can be dollars or points (optional)
+  --passengers 2 \
+  --watch-flight-out '####/####' # Watch the specific outbound flight number rather than all available flights
+  --watch-flight-return '####/####' # Watch the specific return flight number rather than all available flights
+```
+
 ### Twilio integration
 If you have a Twilio account (I'm using a free trial account) and you've set up
 a deal price threshold, you can set the following environment vars to set up SMS
