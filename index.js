@@ -113,10 +113,10 @@ process.argv.forEach((arg, i, argv) => {
     case "--nonstop":
       nonstopClass = '.nonstop'
       break
-    case "--watch-flight-out":
+    case "--leave-flight-number":
       watchFlightOut = argv[i + 1]
       break
-    case "--watch-flight-return":
+    case "--return-flight-number":
       watchFlightReturn = argv[i + 1]
       break
   }

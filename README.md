@@ -71,8 +71,8 @@ swa \
   --return-time 'anytime' \ # Can be anytime, morning, afternoon, evening (optional)
   --fare-type 'dollars' \ # Can be dollars or points (optional)
   --passengers 2 \
-  --watch-flight-out '####/####' # Watch the specific outbound flight number rather than all available flights
-  --watch-flight-return '####/####' # Watch the specific return flight number rather than all available flights
+  --leave-flight-number '####/####' # Watch the specific outbound flight number rather than all available flights
+  --return-flight-number '####/####' # Watch the specific return flight number rather than all available flights
 ```
 
 ### Twilio integration
